@@ -9,13 +9,13 @@ The most basic usage is to check out the repository you want to modify, run `uv 
 - uses: actions/checkout@v6
 - uses: astral-sh/setup-uv@v8.1.0
 - run: uv lock --upgrade
-- uses: virtlink/pyproject-match-uv@v1
+- uses: virtlink/sync-pyproject@v1
 ```
 
 If your `pyproject.toml` and `uv.lock` files live in a subdirectory, pass the optional `directory` input. If omitted, the action uses the current directory (`.`).
 
 ```yaml
-- uses: virtlink/pyproject-match-uv@v1
+- uses: virtlink/sync-pyproject@v1
   with:
     directory: packages/example
 ```
