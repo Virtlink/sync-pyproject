@@ -1,3 +1,12 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.13"
+# dependencies = [
+#    "tomlkit>=0.14.0",
+#    "typer>=0.25.1",
+# ]
+# ///
+
 from __future__ import annotations
 
 import re

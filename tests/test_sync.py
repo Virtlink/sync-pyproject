@@ -6,7 +6,7 @@ from pathlib import Path
 import tomllib
 from typer.testing import CliRunner
 
-from main import app
+from syncpyproject import app
 
 
 class SyncCommandTests(unittest.TestCase):
