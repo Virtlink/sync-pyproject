@@ -1,0 +1,32 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+.qtcreator/
+.tox/
+
+# Virtual environments
+.venv
+
+# Hatch VCS version
+_version.py
+
+# Jujutsu
+.jj/
+
+# IntelliJ
+.idea/
+
+# BeeWare Briefcase
+/.briefcase/
+/logs/
+*.dist-info/
+
+# Big photos
+/examples/
+
+# MacOS
+.DS_Store
