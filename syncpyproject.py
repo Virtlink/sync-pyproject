@@ -1,6 +1,6 @@
-#!/usr/bin/env -S uv run --script
+#!/usr/bin/env python3
 # /// script
-# requires-python = ">=3.13"
+# requires-python = ">=3.11"
 # dependencies = [
 #    "tomlkit>=0.14.0",
 #    "typer>=0.25.1",
@@ -15,6 +15,7 @@ from pathlib import Path
 
 import typer
 import tomlkit
+
 
 app = typer.Typer(help="Sync pyproject dependency versions from uv.lock")
 

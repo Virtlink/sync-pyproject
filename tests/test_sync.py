@@ -3,7 +3,6 @@ import textwrap
 import unittest
 from pathlib import Path
 
-import tomllib
 from typer.testing import CliRunner
 
 from syncpyproject import app
@@ -16,6 +15,75 @@ class SyncCommandTests(unittest.TestCase):
     def _write_project(self, root: Path, pyproject_text: str, uv_lock_text: str) -> None:
         (root / "pyproject.toml").write_text(pyproject_text, encoding="utf-8")
         (root / "uv.lock").write_text(uv_lock_text, encoding="utf-8")
+
+    def test_defaults_to_current_directory(self) -> None:
+        with self.runner.isolated_filesystem():
+            root = Path.cwd()
+            self._write_project(
+                root,
+                textwrap.dedent(
+                    """
+                    [project]
+                    name = "demo"
+                    version = "0.1.0"
+                    dependencies = [
+                        "typer>=0.2.0",
+                    ]
+                    """
+                ).strip()
+                + "\n",
+                textwrap.dedent(
+                    """
+                    version = 1
+                    revision = 3
+
+                    [[package]]
+                    name = "typer"
+                    version = "0.25.1"
+                    """
+                ).strip()
+                + "\n",
+            )
+
+            result = self.runner.invoke(app, [])
+            self.assertEqual(0, result.exit_code, msg=result.output)
+            updated = (root / "pyproject.toml").read_text(encoding="utf-8")
+            self.assertIn('"typer>=0.25.1"', updated)
+
+    def test_accepts_explicit_subdirectory(self) -> None:
+        with self.runner.isolated_filesystem():
+            project_dir = Path("projects") / "demo"
+            project_dir.mkdir(parents=True)
+            self._write_project(
+                project_dir,
+                textwrap.dedent(
+                    """
+                    [project]
+                    name = "demo"
+                    version = "0.1.0"
+                    dependencies = [
+                        "tomlkit>=0.1.0",
+                    ]
+                    """
+                ).strip()
+                + "\n",
+                textwrap.dedent(
+                    """
+                    version = 1
+                    revision = 3
+
+                    [[package]]
+                    name = "tomlkit"
+                    version = "0.14.0"
+                    """
+                ).strip()
+                + "\n",
+            )
+
+            result = self.runner.invoke(app, [str(project_dir)])
+            self.assertEqual(0, result.exit_code, msg=result.output)
+            updated = (project_dir / "pyproject.toml").read_text(encoding="utf-8")
+            self.assertIn('"tomlkit>=0.14.0"', updated)
 
     def test_updates_direct_and_optional_dependencies(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -253,7 +321,7 @@ class SyncCommandTests(unittest.TestCase):
                     name = "demo"
                     version = "0.1.0"
                     dependencies = [
-                        "typer[all]>=0.1.0 ; python_version >= '3.10'",
+                        "typer[all]>=0.1.0 ; python_version >= '3.11'",
                     ]
                     """
                 ).strip()
@@ -276,7 +344,7 @@ class SyncCommandTests(unittest.TestCase):
 
             updated = (root / "pyproject.toml").read_text(encoding="utf-8")
             self.assertIn(
-                '"typer[all]>=0.25.1; python_version >= \'3.10\'"',
+                '"typer[all]>=0.25.1; python_version >= \'3.11\'"',
                 updated,
             )
 

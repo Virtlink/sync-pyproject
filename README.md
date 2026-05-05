@@ -1,20 +1,60 @@
 # Update pyproject.toml
-Updates dependencies in your `pyproject.toml` to match the version numbers from the accompanying `uv.lock` file.
-
-## Prerequisites
-- Python
-- UV ([how to install](https://docs.astral.sh/uv/getting-started/installation/))
+Script and action to update dependencies in your `pyproject.toml` to match the version numbers from the accompanying `uv.lock` file.
 
 
-## Running
+## GitHub Action
+The most basic usage is to check out the repository you want to modify, run `uv lock --upgrade`, and then run this action to sync the version changes to the project's `pyproject.toml`.
+
+```yaml
+- uses: actions/checkout@v6
+- uses: astral-sh/setup-uv@v8.1.0
+- run: uv lock --upgrade
+- uses: virtlink/pyproject-match-uv@v1
+```
+
+If your `pyproject.toml` and `uv.lock` files live in a subdirectory, pass the optional `directory` input. If omitted, the action uses the current directory (`.`).
+
+```yaml
+- uses: virtlink/pyproject-match-uv@v1
+  with:
+    directory: packages/example
+```
+
+### Input
+
+| Name        | Required | Default | Description                                               |
+|-------------|----------|---------|-----------------------------------------------------------|
+| `directory` | No       | `.`     | Directory containing both `pyproject.toml` and `uv.lock`. |
+
+The action installs its own Python dependencies and runs on Python 3.11+.
+
+
+## Technical details
+This script reads the `uv.lock` file and changes the dependency versions in the `pyproject.toml` file to match. It updates:
+
+- `project.dependencies`
+- `project.optional-dependencies.<group>`
+
+For each dependency with a simple version comparator (for example, `>=1.2.0`, `~=2.1`, `==3.0.0`), the tool preserves the existing operator (`>=`, `~=`, `==`, etc.) and replaces only the version token with the lockfile version. Extras and environment markers are preserved. For multi-specifier constraints (for example, `>=1.0,<2.0`), only the first comparator segment that includes both an operator and a version token is updated.
+
+Dependencies without explicit version constraints, complex constraints that cannot be safely rewritten, and dependencies missing in `uv.lock` are not changed. Dependency names are matched using UV-compatible normalization, which means that matching is case-insensitive and treats `-`, `_`, and `.` equivalently for distribution names.
+
+Formatting and comments of your `pyproject.toml` is preserved.
+
+
+## Local CLI usage
 To run the script and see help information:
 
 ```shell
 uv run syncpyproject.py --help
 ```
 
+### Prerequisites
+- Python
+- UV ([how to install](https://docs.astral.sh/uv/getting-started/installation/))
 
-## Usage
+
+### Usage
 1.  First, use UV to update the `uv.lock` file for your project:
 
     ```shell
@@ -32,20 +72,7 @@ By default, the script will warn when a dependency version constraint could not 
 
 On error, the script exits with a non-zero error code and doesn't change `pyproject.toml`.
 
-
-## Technical details
-This script reads the `uv.lock` file and changes the dependency versions in the `pyproject.toml` file to match. It updates:
-
-- `project.dependencies`
-- `project.optional-dependencies.<group>`
-
-For each dependency with a simple version comparator (for example, `>=1.2.0`, `~=2.1`, `==3.0.0`), the tool preserves the existing operator (`>=`, `~=`, `==`, etc.) and replaces only the version token with the lockfile version. Extras and environment markers are preserved. For multi-specifier constraints (for example, `>=1.0,<2.0`), only the first comparator segment that includes both an operator and a version token is updated.
-
-Dependencies without explicit version constraints, complex constraints that cannot be safely rewritten, and dependencies missing in `uv.lock` are not changed. Dependency names are matched using UV-compatible normalization, which means that matching is case-insensitive and treats `-`, `_`, and `.` equivalently for distribution names.
-
-Formatting and comments of your `pyproject.toml` is preserved.
-
-## Run tests
+### Run tests
 
 ```bash
 python -m unittest discover -s tests -v
