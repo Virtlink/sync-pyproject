@@ -134,7 +134,7 @@ def update_dependency_array(
 
 @app.command()
 def sync(
-    directory: Path = typer.Argument(..., exists=True, file_okay=False, dir_okay=True),
+    directory: Path = typer.Argument('.', exists=True, file_okay=False, dir_okay=True),
     quiet: bool = typer.Option(False, "-q", "--quiet", help="Suppress warnings and info output."),
     verbose: bool = typer.Option(False, "-v", "--verbose", help="Print each dependency update."),
 ) -> None:
