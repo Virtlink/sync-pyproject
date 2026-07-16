@@ -1,5 +1,6 @@
-name: Sync pyproject versions from uv.lock
-description: Update dependency version tokens in pyproject.toml to match uv.lock.
+---
+name: "Sync pyproject versions from uv.lock"
+description: Sync dependency version tokens in pyproject.toml to match uv.lock.
 inputs:
   directory:
     description: Directory containing pyproject.toml and uv.lock.
@@ -8,18 +9,17 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Set up Python
+    - name: "Set up Python"
       uses: actions/setup-python@v5
       with:
         python-version: "3.11"
 
-    - name: Install action dependencies
+    - name: "Install action dependencies"
       shell: bash
       run: |
         python -m pip install --disable-pip-version-check tomlkit typer
 
-    - name: Sync pyproject versions
+    - name: "Sync pyproject versions"
       shell: bash
       run: |
         python "$GITHUB_ACTION_PATH/syncpyproject.py" "${{ inputs.directory }}"
-

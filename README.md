@@ -58,7 +58,7 @@ uv run syncpyproject.py --help
 1.  First, use UV to update the `uv.lock` file for your project:
 
     ```shell
-    uv lock --upgrade
+    uv lock --upgrade --script syncpyproject.py
     ```
 
 2.  Then, run the script. Either specify the directory where your `pyproject.toml` and `uv.lock` files live,
