@@ -74,8 +74,17 @@ On error, the script exits with a non-zero error code and doesn't change `pyproj
 
 ### Run tests
 
+The test suite is run through the dedicated test script, which provides its own isolated environment (including `pytest`) so that the main script does not need `pytest` installed:
+
 ```bash
-python -m unittest discover -s tests -v
+uv run --locked syncpyproject_test.py
+```
+
+Arguments after the script name are forwarded to pytest, for example to run a single test or increase verbosity:
+
+```bash
+uv run syncpyproject_test.py -v
+uv run syncpyproject_test.py tests/test_sync.py::SyncCommandTests
 ```
 
 ## License
