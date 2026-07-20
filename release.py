@@ -8,9 +8,10 @@
 """Create a release for this action.
 
 Bumps the version references in README.md to the given (full) version,
-commits the change, creates an annotated tag whose message combines
-"Release <version>" with the relevant section of the changelog, and pushes
-both the commit and the tag to the remote.
+rotates the changelog's [Unreleased] section to the new version (and starts a
+fresh [Unreleased] section), commits both changes, creates an annotated tag whose
+message combines "Release <version>" with the unreleased changelog notes, and
+pushes the commit and the tag to the remote.
 
 Usage:
 
@@ -24,6 +25,7 @@ from __future__ import annotations
 
 import re
 import subprocess
+from datetime import date
 from pathlib import Path
 
 import typer
@@ -145,11 +147,41 @@ def extract_changelog_unreleased() -> str:
     return "\n".join(body).strip()
 
 
+def rotate_changelog(tag: str) -> bool:
+    """Rename the [Unreleased] section to [version] and start a fresh, empty
+    [Unreleased] heading above it. Returns True if the file was modified.
+
+    Before:
+        ## [Unreleased]
+        ### Added
+        - New thing.
+
+    After:
+        ## [Unreleased]
+
+        ## [1.0.1] - 2026-07-20
+        ### Added
+        - New thing.
+    """
+    text = CHANGELOG_PATH.read_text(encoding="utf-8")
+    match = re.search(r"^## \[Unreleased\][ \t]*$", text, re.MULTILINE)
+    if not match:
+        fail(f"no '## [Unreleased]' section found in {CHANGELOG_PATH.name}.")
+    bare_version = tag.lstrip("v")
+    today = date.today().isoformat()
+    new_heading = f"## [Unreleased]\n\n## [{bare_version}] - {today}"
+    new_text = text[: match.start()] + new_heading + text[match.end() :]
+    changed = new_text != text
+    if changed:
+        CHANGELOG_PATH.write_text(new_text, encoding="utf-8")
+    return changed
+
+
 @app.command()
 def release(
     version: str = typer.Argument(..., help="The version to release, e.g. 'v1.0.1'."),
 ) -> None:
-    """Bump the README version, create an annotated tag, and push both."""
+    """Bump the README version, rotate the changelog, create an annotated tag, and push both."""
     tag, major_tag, is_prerelease = parse_version(version)
     typer.echo(f"Releasing {tag}...")
 
@@ -158,17 +190,27 @@ def release(
     if tag_exists(tag):
         fail(f"tag {tag} already exists.")
 
-    count, changed = update_readme(tag)
-    if changed:
+    # Capture the unreleased notes before rotating the changelog, so they can
+    # be used as the body of the annotated tag.
+    body = extract_changelog_unreleased()
+
+    count, readme_changed = update_readme(tag)
+    if readme_changed:
         typer.echo(f"Updated {count} version reference(s) in README.md.")
-        git("add", str(README_PATH))
+
+    changelog_changed = rotate_changelog(tag)
+    if changelog_changed:
+        typer.echo(f"Rotated changelog: [Unreleased] -> [{tag.lstrip('v')}].")
+
+    if readme_changed or changelog_changed:
+        git("add", str(README_PATH), str(CHANGELOG_PATH))
         git("commit", "-m", f"Release {tag}")
     else:
         typer.echo(
-            "README.md already references this version; tagging the current commit."
+            "README.md and CHANGELOG.md are already up to date; "
+            "tagging the current commit."
         )
 
-    body = extract_changelog_unreleased()
     message = f"Release {tag}"
     if body:
         message += f"\n\n{body}"
