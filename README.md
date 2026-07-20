@@ -105,6 +105,35 @@ Pushing the tag triggers the `Release` workflow, which re-runs the tests and yam
 
 Pre-release versions such as `v1.0.1-beta.1` create a GitHub pre-release but do **not** move the `v1` tag, so `@v1` keeps pointing at the last stable release.
 
+### Run tests
+
+The release script ships with its own pytest suite — the tests live in `release.py` itself. Run them directly with uv, which reads the script's inline dependency metadata (including `pytest`) via `--with-requirements`:
+
+```bash
+uv run --with-requirements release.py pytest release.py
+```
+
+Arguments after `pytest` are forwarded as-is, for example to run a single test or increase verbosity:
+
+```bash
+uv run --with-requirements release.py pytest release.py::test_parse_version_strips_leading_v
+uv run --with-requirements release.py pytest release.py -v
+```
+
+### Lint and type check
+
+The release script is formatted and linted with [ruff](https://docs.astral.sh/ruff/) and type-checked with [ty](https://docs.astral.sh/ty/):
+
+```bash
+uvx ruff check release.py
+uvx ruff format --check release.py
+uvx --with-requirements release.py --with ty ty check release.py
+```
+
+To auto-format, replace `format --check` with `format`.
+
+`release.py` and `release.py.lock` are self-contained and can be copied into another GitHub action's repository with no changes other than the `REPOSITORY` constant at the top of `release.py`.
+
 ## License
 Copyright (C) 2026 Daniel A. A. Pelsmaeker
 

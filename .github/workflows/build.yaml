@@ -26,6 +26,19 @@ jobs:
         run: |
           uv run --locked syncpyproject_test.py
 
+      - name: "Test release script"
+        run: |
+          uv run --with-requirements release.py pytest release.py
+
+      - name: "Lint Python files"
+        run: |
+          uvx ruff check release.py
+          uvx ruff format --check release.py
+
+      - name: "Type check release script"
+        run: |
+          uvx --with-requirements release.py --with ty ty check release.py
+
       - name: "Lint YAML files"
         run: |
           uvx yamllint --strict .
