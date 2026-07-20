@@ -14,7 +14,7 @@ both the commit and the tag to the remote.
 
 Usage:
 
-    uv run release.py v1.0.1
+    uv run --locked release.py v1.0.1
 
 The working tree must be clean and the current branch must be up to date
 with its remote before the script will run.

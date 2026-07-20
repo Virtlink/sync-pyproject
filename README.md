@@ -87,6 +87,26 @@ uv run syncpyproject_test.py -v
 uv run syncpyproject_test.py tests/test_sync.py::SyncCommandTests
 ```
 
+## Releasing
+
+Releases are cut from `main` with the `release.py` helper and the [`Release`](.github/workflows/release.yaml) GitHub Actions workflow.
+
+Before releasing, list every notable change since the last release under the `## [Unreleased]` heading in [`CHANGELOG.md`](CHANGELOG.md). This section is used as the body of the Git tag. Your working tree must be clean and `main` must be in sync with `origin/main`; the script enforces this and aborts otherwise.
+
+To cut a release, run:
+
+```bash
+uv run --locked release.py v1.0.1
+```
+
+The script verifies a clean, pushed working tree, updates every `virtlink/sync-pyproject@v…` reference in `README.md` to the new version (e.g. `@v1.0.1`), commits the change, creates an annotated tag `v1.0.1` whose message combines `Release v1.0.1` with the `## [Unreleased]` section of the changelog, and pushes the commit and the tag to `origin`.
+
+Pushing the tag triggers the `Release` workflow, which re-runs the tests and yamllint, creates a GitHub Release with auto-generated notes, and moves the `v1` tag to the same commit so that both `@v1` and `@v1.0.1` resolve for consumers.
+
+After releasing, rotate the changelog: rename `## [Unreleased]` to `## [1.0.1] - YYYY-MM-DD` and add a fresh `## [Unreleased]` heading above it, then commit and push.
+
+Pre-release versions such as `v1.0.1-beta.1` create a GitHub pre-release but do **not** move the `v1` tag, so `@v1` keeps pointing at the last stable release.
+
 ## License
 Copyright (C) 2026 Daniel A. A. Pelsmaeker
 
