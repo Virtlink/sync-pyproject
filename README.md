@@ -9,13 +9,13 @@ The most basic usage is to check out the repository you want to modify, run `uv 
 - uses: actions/checkout@v6
 - uses: astral-sh/setup-uv@v8.1.0
 - run: uv lock --upgrade
-- uses: virtlink/sync-pyproject@v1
+- uses: virtlink/sync-pyproject@v1.0.1
 ```
 
 If your `pyproject.toml` and `uv.lock` files live in a subdirectory, pass the optional `directory` input. If omitted, the action uses the current directory (`.`).
 
 ```yaml
-- uses: virtlink/sync-pyproject@v1
+- uses: virtlink/sync-pyproject@v1.0.1
   with:
     directory: packages/example
 ```
@@ -99,7 +99,7 @@ To cut a release, run:
 uv run --locked release.py v1.0.1
 ```
 
-The script verifies a clean, pushed working tree, updates every `virtlink/sync-pyproject@v…` reference in `README.md` to the new version (e.g. `@v1.0.1`), rotates the changelog's `## [Unreleased]` section to `## [1.0.1] - YYYY-MM-DD` and starts a fresh `## [Unreleased]` heading, commits both changes, creates an annotated tag `v1.0.1` whose message combines `Release v1.0.1` with the unreleased changelog notes, and pushes the commit and the tag to `origin`.
+The script verifies a clean, pushed working tree, updates every `virtlink/sync-pyproject@v1.0.1…` reference in `README.md` to the new version (e.g. `@v1.0.1`), rotates the changelog's `## [Unreleased]` section to `## [1.0.1] - YYYY-MM-DD` and starts a fresh `## [Unreleased]` heading, commits both changes, creates an annotated tag `v1.0.1` whose message combines `Release v1.0.1` with the unreleased changelog notes, and pushes the commit and the tag to `origin`.
 
 Pushing the tag triggers the `Release` workflow, which re-runs the tests and yamllint, creates a GitHub Release with auto-generated notes, and moves the `v1` tag to the same commit so that both `@v1` and `@v1.0.1` resolve for consumers.
 
