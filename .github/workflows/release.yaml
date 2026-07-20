@@ -1,0 +1,67 @@
+---
+name: "Release"
+
+on:  # yamllint disable-line rule:truthy
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: "Release"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+
+      - name: "Install UV"
+        uses: astral-sh/setup-uv@11f9893b081a58869b3b5fccaea48c9e9e46f990  # v8.3.2
+        with:
+          enable-cache: true
+
+      - name: "Run tests"
+        run: |
+          uv run --locked syncpyproject_test.py
+
+      - name: "Lint YAML files"
+        run: |
+          uvx yamllint --strict .
+
+      - name: "Parse version"
+        id: version
+        run: |
+          TAG="${GITHUB_REF_NAME}"        # e.g. v1.0.0
+          VERSION="${TAG#v}"              # 1.0.0
+          MAJOR="${VERSION%%.*}"          # 1
+          {
+            echo "tag=${TAG}"
+            echo "version=${VERSION}"
+            echo "major=${MAJOR}"
+          } >> "$GITHUB_OUTPUT"
+          # Pre-releases (e.g. v1.0.0-beta.1) must NOT move the major tag.
+          if [[ "${VERSION}" == *-* ]]; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: "Create GitHub Release"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          args=(--title "${{ steps.version.outputs.tag }}" --generate-notes)
+          if [[ "${{ steps.version.outputs.prerelease }}" == "true" ]]; then
+            args+=(--prerelease)
+          fi
+          gh release create "${{ steps.version.outputs.tag }}" "${args[@]}"
+
+      - name: "Update major version tag (v${{ steps.version.outputs.major }})"
+        if: steps.version.outputs.prerelease == 'false'
+        run: |
+          MAJOR_TAG="v${{ steps.version.outputs.major }}"
+          # Point the moving major tag (e.g. v1) at this release's commit.
+          git tag -f "${MAJOR_TAG}" "$GITHUB_SHA"
+          git push origin -f "${MAJOR_TAG}"
