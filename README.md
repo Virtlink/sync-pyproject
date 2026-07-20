@@ -73,7 +73,7 @@ By default, the script will warn when a dependency version constraint could not 
 On error, the script exits with a non-zero error code and doesn't change `pyproject.toml`.
 
 ### Run tests
-
+ 
 The test suite is run through the dedicated test script, which provides its own isolated environment (including `pytest`) so that the main script does not need `pytest` installed:
 
 ```bash

@@ -1,3 +1,4 @@
+import os
 import tempfile
 import textwrap
 import unittest
@@ -17,8 +18,8 @@ class SyncCommandTests(unittest.TestCase):
         (root / "uv.lock").write_text(uv_lock_text, encoding="utf-8")
 
     def test_defaults_to_current_directory(self) -> None:
-        with self.runner.isolated_filesystem():
-            root = Path.cwd()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
             self._write_project(
                 root,
                 textwrap.dedent(
@@ -45,14 +46,19 @@ class SyncCommandTests(unittest.TestCase):
                 + "\n",
             )
 
-            result = self.runner.invoke(app, [])
+            original_cwd = Path.cwd()
+            try:
+                os.chdir(root)
+                result = self.runner.invoke(app, [])
+            finally:
+                os.chdir(original_cwd)
             self.assertEqual(0, result.exit_code, msg=result.output)
             updated = (root / "pyproject.toml").read_text(encoding="utf-8")
             self.assertIn('"typer>=0.25.1"', updated)
 
     def test_accepts_explicit_subdirectory(self) -> None:
-        with self.runner.isolated_filesystem():
-            project_dir = Path("projects") / "demo"
+        with tempfile.TemporaryDirectory() as tmp:
+            project_dir = Path(tmp) / "projects" / "demo"
             project_dir.mkdir(parents=True)
             self._write_project(
                 project_dir,
